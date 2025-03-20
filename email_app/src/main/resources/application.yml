@@ -1,0 +1,55 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: email-app
+  kafka:
+    bootstrap-servers: localhost:9091
+    consumer:
+      group-id: mail-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+
+#  mail:
+#    host: smtp.wp.pl
+#    port: 465
+#    username: vetcliniccontroller@wp.pl
+#    password: Wrobel123.
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          ssl:
+#            enable: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: motivatedchicken@gmail.com
+    password: nfuzjwdjgcumtitz
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
+logging:
+  level:
+    org.springframework: DEBUG
+    org.springframework.cloud: DEBUG
