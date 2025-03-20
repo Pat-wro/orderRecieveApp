@@ -29,6 +29,7 @@ public class KafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
+
     }
 
     private ConsumerFactory<String, OrderRequestDTO> consumerFactory() {
