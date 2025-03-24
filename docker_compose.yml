@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Infrastruktura
   postgres:
     image: postgres
     container_name: postgres_db
@@ -12,6 +13,8 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   kafka:
     image: confluentinc/cp-kafka:5.3.0
@@ -29,6 +32,8 @@ services:
       - ./data/kafka/data:/var/lib/kafka/data
     depends_on:
       - zookeeper
+    networks:
+      - app-network
 
   zookeeper:
     image: zookeeper:3.4.9
@@ -42,6 +47,8 @@ services:
     volumes:
       - ./data/zookeeper/data:/data
       - ./data/zookeeper/datalog:/datalog
+    networks:
+      - app-network
 
   kafdrop:
     image: obsidiandynamics/kafdrop
@@ -52,6 +59,8 @@ services:
       KAFKA_BROKERCONNECT: "kafka:19091"
     depends_on:
       - kafka
+    networks:
+      - app-network
 
   pgadmin:
     image: dpage/pgadmin4
@@ -66,6 +75,81 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+    networks:
+      - app-network
+
+  # Redis dla API Gateway
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  # Aplikacje Spring Boot
+  eureka-server:
+    build: ./eureka_app
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - app-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api_gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_REDIS_HOST=redis
+    depends_on:
+      - eureka-server
+      - redis
+    networks:
+      - app-network
+
+  email-app:
+    build:
+      context: .
+      dockerfile: ./email_app/Dockerfile
+    container_name: email-app
+    depends_on:
+      - eureka-server
+      - kafka
+    networks:
+      - app-network
+
+  order-api-app:
+    build:
+      context: .
+      dockerfile: ./order_api_app/Dockerfile
+    container_name: order-api-app
+    depends_on:
+      - eureka-server
+      - kafka
+    networks:
+      - app-network
+
+  order-processing-app:
+    build:
+      context: .
+      dockerfile: ./order_processing_app/Dockerfile
+    container_name: order-processing-app
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mydb
+    depends_on:
+      - eureka-server
+      - kafka
+      - postgres
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:

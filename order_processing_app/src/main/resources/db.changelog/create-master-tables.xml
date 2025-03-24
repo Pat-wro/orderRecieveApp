@@ -27,5 +27,22 @@
             </column>
         </createTable>
     </changeSet>
+    <changeSet id="2" author="job">
+        <sql>
+            ALTER TABLE order_request
+            ALTER COLUMN status_code TYPE smallint
+            USING (
+            CASE status_code
+            WHEN 'NEW' THEN 0
+            WHEN 'PROCESSING' THEN 1
+            WHEN 'PACKED' THEN 2
+            WHEN 'IN_TRANSIT' THEN 3
+            WHEN 'DELIVERED' THEN 4
+            WHEN 'COMPLETED' THEN 5
+            ELSE 0
+            END
+            );
+        </sql>
+    </changeSet>
 
 </databaseChangeLog>

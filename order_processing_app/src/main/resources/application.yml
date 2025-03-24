@@ -15,7 +15,7 @@ spring:
     hibernate:
       ddl-auto: update
   kafka:
-    bootstrap-servers: localhost:9091
+    bootstrap-servers: kafka:19091
     consumer:
       group-id: my-app
       auto-offset-reset: earliest
@@ -35,8 +35,62 @@ app:
       queue-capacity: ${ASYNC_QUEUE_CAPACITY:100}
       thread-name-prefix: ${ASYNC_THREAD_PREFIX:AsyncTask-}
       wait-for-tasks: ${ASYNC_WAIT_FOR_TASKS:true}
+resilience4j:
+  circuitbreaker:
+    instances:
+      databaseService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+      emailService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  # Konfiguracja retry
+  retry:
+    instances:
+      databaseService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - org.springframework.dao.DataAccessException
+          - java.sql.SQLException
+      emailService:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - org.springframework.kafka.KafkaException
+          - java.io.IOException
+  timelimiter:
+    instances:
+      databaseService:
+        timeoutDuration: 5s
+      emailService:
+        timeoutDuration: 3s
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers,retries
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    circuitbreakers:
+      enabled: true
+    retries:
+      enabled: true
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://eureka-server:8761/eureka

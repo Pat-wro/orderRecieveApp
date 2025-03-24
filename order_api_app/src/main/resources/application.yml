@@ -5,7 +5,7 @@ spring:
   application:
     name: order-api-app
   kafka:
-    bootstrap-servers: localhost:9091
+    bootstrap-servers: kafka:19091
     consumer:
       group-id: my-app
       auto-offset-reset: earliest
@@ -25,8 +25,47 @@ app:
       queue-capacity: ${ASYNC_QUEUE_CAPACITY:100}
       thread-name-prefix: ${ASYNC_THREAD_PREFIX:AsyncTask-}
       wait-for-tasks: ${ASYNC_WAIT_FOR_TASKS:true}
+resilience4j:
+  circuitbreaker:
+    instances:
+      kafkaService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  # Konfiguracja retry
+  retry:
+    instances:
+      kafkaService:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - org.springframework.kafka.KafkaException
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+  timelimiter:
+    instances:
+      kafkaService:
+        timeoutDuration: 3s
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers,retries
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    circuitbreakers:
+      enabled: true
+    retries:
+      enabled: true
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://eureka-server:8761/eureka
