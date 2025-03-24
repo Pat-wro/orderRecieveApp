@@ -34,7 +34,6 @@ public class OrderService {
             order.setSenderCountryCode(orderRequestDto.getSenderCountryCode());
             order.setStatusCode(orderRequestDto.getStatusCode());
         } else {
-//            TODO pomyslec nad converterem
             order = OrderRequest.builder()
                     .shipmentNumber(orderRequestDto.getShipmentNumber())
                     .receiverEmail(orderRequestDto.getReceiverEmail())
@@ -43,8 +42,6 @@ public class OrderService {
                     .statusCode(orderRequestDto.getStatusCode())
                     .build();
         }
-        log.info("dzialaja logi");
-        System.out.println("dupa");
         orderRepository.save(order);
     }
     private void fallbackProcessOrder(OrderRequestDTO orderRequestDto, Exception ex) {
