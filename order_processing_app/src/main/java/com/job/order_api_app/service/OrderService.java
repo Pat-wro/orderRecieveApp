@@ -25,20 +25,20 @@ public class OrderService {
     @Retry(name = "databaseService")
     @Transactional
     public void processOrder(OrderRequestDTO orderRequestDto) {
-        Optional<OrderRequest> existingOrder = orderRepository
-                .findByShipmentNumber(orderRequestDto.getShipmentNumber());
+        OrderRequest order = orderRepository
+                .findByShipmentNumber(orderRequestDto.getShipmentNumber())
+                .map(existingOrder -> updateExistingOrder(existingOrder, orderRequestDto))
+                .orElseGet(() -> modelMapper.map(orderRequestDto, OrderRequest.class));
 
-        if (existingOrder.isPresent()) {
-            OrderRequest order = existingOrder.get();
-            order.setReceiverEmail(orderRequestDto.getReceiverEmail());
-            order.setReceiverCountryCode(orderRequestDto.getReceiverCountryCode());
-            order.setSenderCountryCode(orderRequestDto.getSenderCountryCode());
-            order.setStatusCode(orderRequestDto.getStatusCode());
-            orderRepository.save(order);
-        } else {
-            OrderRequest newOrder = modelMapper.map(orderRequestDto, OrderRequest.class);
-            orderRepository.save(newOrder);
-        }
+        orderRepository.save(order);
+    }
+
+    private OrderRequest updateExistingOrder(OrderRequest order, OrderRequestDTO dto) {
+        order.setReceiverEmail(dto.getReceiverEmail());
+        order.setReceiverCountryCode(dto.getReceiverCountryCode());
+        order.setSenderCountryCode(dto.getSenderCountryCode());
+        order.setStatusCode(dto.getStatusCode());
+        return order;
     }
     private void fallbackProcessOrder(OrderRequestDTO orderRequestDto, Exception ex) {
         log.error("Circuit breaker: DB unavailable for shipment: {}",

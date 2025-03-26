@@ -28,16 +28,8 @@ public class KafkaTopicConfig {
         return TopicBuilder.name("order-requests")
                 .partitions(2)
                 .replicas(1)
-                .config("retention.ms", "86400000") // 24 hours retention
+                .config("retention.ms", "86400000")
                 .build();
     }
 
-//    @Bean
-//    public NewTopic orderConfirmationTopic() {
-//        return TopicBuilder.name("order-confirmations")
-//                .partitions(2)
-//                .replicas(1)
-//                .config("retention.ms", "86400000")
-//                .build();
-//    }
 }

@@ -6,14 +6,11 @@ spring:
     name: order-api-app
   kafka:
     bootstrap-servers: kafka:19091
-    consumer:
-      group-id: my-app
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: orderRequest:com.example.library.OrderRequestDTO
   liquibase:
     change-log: changelog-master.xml
     enabled: true
